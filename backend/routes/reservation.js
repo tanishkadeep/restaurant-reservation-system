@@ -1,17 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { Reservation } = require("../db");
+const { Reservation, User, Restaurant } = require("../db");
 const { z } = require("zod");
 const mongoose = require("mongoose");
 const authMiddleware = require("./authMiddleware");
 
 const reservationSchema = z.object({
-  user: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
-    message: "Invalid user ID",
-  }),
-  restaurant: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
-    message: "Invalid restaurant ID",
-  }),
+  userName: z.string(),
+  restaurantName: z.string(),
   date: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: "Invalid date",
   }),
@@ -22,7 +18,23 @@ const reservationSchema = z.object({
 router.post("/", authMiddleware, async (req, res) => {
   try {
     const parsedBody = reservationSchema.parse(req.body);
-    const reservation = new Reservation(parsedBody);
+    const user = await User.findOne({ name: parsedBody.userName });
+    const restaurant = await Restaurant.findOne({ name: parsedBody.restaurantName });
+
+    if (!user) {
+      return res.status(400).send({ message: "User not found." });
+    }
+    if (!restaurant) {
+      return res.status(400).send({ message: "Restaurant not found." });
+    }
+
+    const reservation = new Reservation({
+      user: user._id,
+      restaurant: restaurant._id,
+      date: parsedBody.date,
+      time: parsedBody.time,
+      guests: parsedBody.guests,
+    });
     await reservation.save();
     res.status(201).send(reservation);
   } catch (error) {
@@ -45,6 +57,20 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const reservation = await Reservation.findById(req.params.id)
+      .populate("restaurant")
+      .populate("user");
+    if (!reservation) {
+      return res.status(404).send();
+    }
+    res.send(reservation);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+});
+
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const parsedBody = reservationSchema.partial().parse(req.body);
@@ -52,7 +78,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
       req.params.id,
       parsedBody,
       { new: true }
-    );
+    ).populate("restaurant").populate("user");
     if (!reservation) {
       return res.status(404).send();
     }

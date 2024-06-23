@@ -34,7 +34,19 @@ router.get("/", async (req, res) => {
     const restaurants = await Restaurant.find({});
     res.send(restaurants);
   } catch (error) {
-    res.status(500).send(error.message); // Generic error message
+    res.status(500).send(error.message);
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findById(req.params.id);
+    if (!restaurant) {
+      return res.status(404).send();
+    }
+    res.send(restaurant);
+  } catch (error) {
+    res.status(500).send(error.message);
   }
 });
 
