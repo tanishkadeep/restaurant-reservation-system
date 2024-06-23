@@ -1,15 +1,36 @@
 const express = require("express");
 const router = express.Router();
 const { Reservation } = require("../db");
+const { z } = require("zod");
+const mongoose = require("mongoose");
+
+const reservationSchema = z.object({
+  user: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
+    message: "Invalid user ID",
+  }),
+  restaurant: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
+    message: "Invalid restaurant ID",
+  }),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date",
+  }),
+  time: z.string(),
+  guests: z.number().min(1, { message: "Guests must be at least 1" }),
+});
 
 // Create a new reservation
 router.post("/", async (req, res) => {
   try {
-    const reservation = new Reservation(req.body);
+    const parsedBody = reservationSchema.parse(req.body);
+    const reservation = new Reservation(parsedBody);
     await reservation.save();
     res.status(201).send(reservation);
   } catch (error) {
-    res.status(400).send(error);
+    if (error instanceof z.ZodError) {
+      res.status(400).send(error.errors);
+    } else {
+      res.status(400).send(error);
+    }
   }
 });
 
@@ -28,9 +49,10 @@ router.get("/", async (req, res) => {
 // Update a reservation by ID
 router.put("/:id", async (req, res) => {
   try {
+    const parsedBody = reservationSchema.partial().parse(req.body);
     const reservation = await Reservation.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      parsedBody,
       { new: true }
     );
     if (!reservation) {
@@ -38,7 +60,11 @@ router.put("/:id", async (req, res) => {
     }
     res.send(reservation);
   } catch (error) {
-    res.status(400).send(error);
+    if (error instanceof z.ZodError) {
+      res.status(400).send(error.errors);
+    } else {
+      res.status(400).send(error);
+    }
   }
 });
 

@@ -1,15 +1,28 @@
 const express = require("express");
 const router = express.Router();
 const { User } = require("../db");
+const mongoose = require("mongoose");
+const { z } = require("zod");
+
+const userSchema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  password: z.string().min(6),
+});
 
 // Create a new user
 router.post("/", async (req, res) => {
   try {
-    const user = new User(req.body);
+    const parsedBody = userSchema.parse(req.body);
+    const user = new User(parsedBody);
     await user.save();
     res.status(201).send(user);
   } catch (error) {
-    res.status(400).send(error);
+    if (error instanceof z.ZodError) {
+      res.status(400).send(error.errors);
+    } else {
+      res.status(400).send(error);
+    }
   }
 });
 
@@ -26,7 +39,8 @@ router.get("/", async (req, res) => {
 // Update a user by ID
 router.put("/:id", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    const parsedBody = userSchema.partial().parse(req.body);
+    const user = await User.findByIdAndUpdate(req.params.id, parsedBody, {
       new: true,
     });
     if (!user) {
@@ -34,7 +48,11 @@ router.put("/:id", async (req, res) => {
     }
     res.send(user);
   } catch (error) {
-    res.status(400).send(error);
+    if (error instanceof z.ZodError) {
+      res.status(400).send(error.errors);
+    } else {
+      res.status(400).send(error);
+    }
   }
 });
 
