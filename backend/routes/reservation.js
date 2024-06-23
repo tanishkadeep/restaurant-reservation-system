@@ -3,7 +3,7 @@ const router = express.Router();
 const { Reservation } = require("../db");
 const { z } = require("zod");
 const mongoose = require("mongoose");
-const authMiddleware = require("../middleware/auth");
+const authMiddleware = require("./authMiddleware");
 
 const reservationSchema = z.object({
   user: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {

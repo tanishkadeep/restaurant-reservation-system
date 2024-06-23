@@ -3,7 +3,7 @@ const router = express.Router();
 const { Restaurant } = require("../db");
 const mongoose = require("mongoose");
 const { z } = require("zod");
-const authMiddleware = require("../middleware/auth");
+const authMiddleware = require("./authMiddleware");
 
 const availabilitySchema = z.record(z.boolean());
 
@@ -24,7 +24,7 @@ router.post("/", authMiddleware, async (req, res) => {
     if (error instanceof z.ZodError) {
       res.status(400).send(error.errors);
     } else {
-      res.status(400).send(error.message); 
+      res.status(400).send(error.message);
     }
   }
 });
@@ -54,7 +54,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
     if (error instanceof z.ZodError) {
       res.status(400).send(error.errors);
     } else {
-      res.status(400).send(error.message); 
+      res.status(400).send(error.message);
     }
   }
 });
@@ -67,7 +67,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
     }
     res.send(restaurant);
   } catch (error) {
-    res.status(500).send(error.message); 
+    res.status(500).send(error.message);
   }
 });
 
