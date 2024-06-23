@@ -1,7 +1,19 @@
-import "./App.css";
+// App.jsx
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { RecoilRoot } from "recoil";
+import RestaurantList from "./components/RestaurantList";
 
-function App() {
-  return <div></div>;
-}
+const App = () => {
+  return (
+    <RecoilRoot>
+      <Router>
+        <Routes>
+          <Route path="/" element={<RestaurantList />} />
+        </Routes>
+      </Router>
+    </RecoilRoot>
+  );
+};
 
 export default App;
