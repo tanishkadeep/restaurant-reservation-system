@@ -32,7 +32,7 @@ const RestaurantList = () => {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Restaurants</h1>
+      <h1 className="text-4xl font-bold mb-4">Restaurants</h1>
       <div className="grid gap-4">
         {restaurants.map((restaurant) => (
           <div key={restaurant._id} className="p-4 bg-white shadow-md rounded">
