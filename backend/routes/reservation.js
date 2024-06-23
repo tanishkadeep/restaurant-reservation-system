@@ -3,6 +3,7 @@ const router = express.Router();
 const { Reservation } = require("../db");
 const { z } = require("zod");
 const mongoose = require("mongoose");
+const authMiddleware = require("../middleware/auth");
 
 const reservationSchema = z.object({
   user: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), {
@@ -18,8 +19,7 @@ const reservationSchema = z.object({
   guests: z.number().min(1, { message: "Guests must be at least 1" }),
 });
 
-// Create a new reservation
-router.post("/", async (req, res) => {
+router.post("/", authMiddleware, async (req, res) => {
   try {
     const parsedBody = reservationSchema.parse(req.body);
     const reservation = new Reservation(parsedBody);
@@ -34,7 +34,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Read all reservations
 router.get("/", async (req, res) => {
   try {
     const reservations = await Reservation.find({})
@@ -46,8 +45,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Update a reservation by ID
-router.put("/:id", async (req, res) => {
+router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const parsedBody = reservationSchema.partial().parse(req.body);
     const reservation = await Reservation.findByIdAndUpdate(
@@ -68,8 +66,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Delete a reservation by ID
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const reservation = await Reservation.findByIdAndDelete(req.params.id);
     if (!reservation) {
